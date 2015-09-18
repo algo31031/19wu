@@ -26,7 +26,7 @@ class EventOrdersController < ApplicationController
     params[:q] ||= {}
     params[:q][:status_eq] = params[:status]
     @search = @event.orders.search params[:q]
-    @orders = @search.result
+    @orders = @search.result distinct: true
   end
 
   def stats
@@ -40,7 +40,7 @@ class EventOrdersController < ApplicationController
   end
 
   def order_params
-    params.fetch(:order, {}).permit({
+    params.fetch(:order, {}).permit(:user_wants_invoice, {
       items_attributes: [:ticket_id, :quantity],
       shipping_address_attributes: [:invoice_title, :province, :city, :district, :address, :name, :phone]
     })

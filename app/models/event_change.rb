@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 class EventChange < ActiveRecord::Base
   belongs_to :event
   validates :content, length: { maximum: 100 }
@@ -7,6 +8,7 @@ class EventChange < ActiveRecord::Base
       EventMailer.delay.change_email(self, user)
     end
     phones = event.ordered_users.with_phone.map(&:phone).sort
-    ChinaSMS.delay.to phones, I18n.t('sms.event.change', content: content)
+    # 活动通知的内容无法通过短信格式备案，暂时不发送
+    #ChinaSMS.delay.to phones, I18n.t('sms.event.change', content: content)
   end
 end

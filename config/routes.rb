@@ -9,6 +9,10 @@ NineteenWu::Application.routes.draw do
       post 'unfollow'
       get 'followers'
     end
+    # Event 相关的都放在 event 目录
+    scope module: 'event' do
+      resources :invoices     , :only => [:index]
+    end
     resources :participants , :only => [:index] do
       collection do
         get :checkin
@@ -22,7 +26,12 @@ NineteenWu::Application.routes.draw do
     end
     resources :export       , :only => [:index]
     resources :changes      , :only => [:index, :new, :create]    , :controller => 'event_changes'
-    resources :tickets      , :controller => 'event_tickets'
+    resources :tickets      , :controller => 'event_tickets' do
+      member do
+        post :open
+        post :close
+      end
+    end
     resources :orders       , :only => [:create, :index]          , :controller => 'event_orders' do
       collection do
         get 'status/:status', :to => 'event_orders#index', :as => :filter
@@ -40,7 +49,7 @@ NineteenWu::Application.routes.draw do
   get ":slug" => "group#event", :constraints => SlugConstraint, :as => :slug_event
   get ":slug/followers" => "group#followers"
   get 'ordered_events', to: "events#ordered"
-  post '/photos', to: "photo#create"
+  match '/photos', to: "photo#create", via: [:post, :patch]    # 修改活动时为 patch
   post "/content/preview/" => "home#content_preview"
 
   authenticated :user do

@@ -15,6 +15,8 @@ class EventOrder < ActiveRecord::Base
   validates :quantity, presence: true, numericality: { greater_than: 0 }
   validate :quantity_cannot_be_greater_than_event_quantity, :invoice_should_has_address, on: :create
 
+  scope :paid, -> { where(status: 'paid') }
+
   before_validation do
     self.quantity = calculate_quantity
     self.price_in_cents = calculate_price_in_cents
@@ -77,7 +79,7 @@ class EventOrder < ActiveRecord::Base
     self.trade_no.blank? # for now, only bank transfer was supported.
   end
 
-  def require_invoice
+  def provide_invoice
     items.map(&:require_invoice).any?
   end
 
@@ -93,7 +95,9 @@ class EventOrder < ActiveRecord::Base
           items_attributes: items_attributes
       }
       order_params[:shipping_address_attributes] = params[:shipping_address_attributes] if params[:shipping_address_attributes]
-      event.orders.build order_params
+      order = event.orders.build order_params
+      order.require_invoice = (order.provide_invoice && params[:user_wants_invoice]) if params[:user_wants_invoice]
+      order
     end
 
     # TODO: validate, event and its inventory, #457, #467

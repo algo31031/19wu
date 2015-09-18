@@ -6,7 +6,12 @@ class EventOrderItem < ActiveRecord::Base
   validates :ticket, presence: true, on: :create
   validates :quantity, presence: true, numericality: { greater_than: 0 }
   validates :price_in_cents, :unit_price_in_cents, presence: true, numericality: { greater_than_or_equal_to: 0 }
-  delegate :require_invoice, to: :ticket
+
+  validate do
+    if ticket.present? && ticket.closed?
+      errors.add(:ticket, I18n.t('errors.messages.ticket.close'))
+    end
+  end
 
   before_validation do
     if new_record?
@@ -53,5 +58,9 @@ class EventOrderItem < ActiveRecord::Base
 
   def name
     self.ticket ? self.ticket.name : 'deleted'
+  end
+
+  def require_invoice
+    self.ticket.try(:require_invoice)
   end
 end

@@ -19,13 +19,14 @@ class UserPhonesController < ApplicationController
 
   def send_code
     ip_key = "sms:#{request.remote_ip}" # TODO: config to use memcached.
-    send_times = Rails.cache.fetch(ip_key, expires_in: 24.hours){ 10 }
+    send_times = Rails.cache.fetch(ip_key, expires_in: 24.hours){ 100 }
     if send_times > 0
       Rails.cache.decrement ip_key
       code = cookies.signed[:code] || rand(1000..9999)
       code = 1234 if Rails.env.test?
       Rails.logger.info "#{send_times}: #{I18n.t('sms.user.phone_code', code: code)}"
-      ChinaSMS.to params[:phone], I18n.t('sms.user.phone_code', code: code)
+      tpl_params = { company: I18n.t('19wu'), code: code }
+      ChinaSMS.to params[:phone], tpl_params, tpl_id: 1
       cookies.signed[:code] = { value: code, expires: 1.hour.from_now }
     end
     render nothing: true
